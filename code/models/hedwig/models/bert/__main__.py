@@ -9,7 +9,8 @@ from transformers import (
     XLNetForSequenceClassification, XLNetTokenizer,
     RobertaForSequenceClassification, RobertaTokenizer,
     AlbertForSequenceClassification, AlbertTokenizer,
-    ElectraForSequenceClassification, ElectraTokenizer
+    ElectraForSequenceClassification, ElectraTokenizer,
+    DebertaV2ForSequenceClassification, DebertaV2Tokenizer
 )
 
 from common.constants import *
@@ -66,7 +67,8 @@ def run_main(args):
         'electra': ElectraForSequenceClassification,
         'xlnet': XLNetForSequenceClassification,
         'roberta': RobertaForSequenceClassification,
-        'albert': AlbertForSequenceClassification
+        'albert': AlbertForSequenceClassification,
+        'deberta': DebertaV2ForSequenceClassification
     }
 
     tokenizer_map = {
@@ -74,7 +76,8 @@ def run_main(args):
         'electra': ElectraTokenizer,
         'xlnet': XLNetTokenizer,
         'roberta': RobertaTokenizer,
-        'albert': AlbertTokenizer
+        'albert': AlbertTokenizer,
+        'deberta': DebertaV2Tokenizer
     }
 
     if args.gradient_accumulation_steps < 1:
@@ -114,7 +117,10 @@ def run_main(args):
 
     pretrained_model_path = args.model
 
-    tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
+    if args.model_family == 'deberta':
+        tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path, add_prefix_space=True)
+    else:
+        tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
     model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
 
     # hacky fix for error in transformers code
