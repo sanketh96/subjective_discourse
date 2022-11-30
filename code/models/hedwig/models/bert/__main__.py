@@ -10,7 +10,7 @@ from transformers import (
     RobertaForSequenceClassification, RobertaTokenizer,
     AlbertForSequenceClassification, AlbertTokenizer,
     ElectraForSequenceClassification, ElectraTokenizer,
-    DebertaV2ForSequenceClassification, DebertaV2Tokenizer
+    DebertaForSequenceClassification, DebertaTokenizer
 )
 
 from common.constants import *
@@ -68,7 +68,7 @@ def run_main(args):
         'xlnet': XLNetForSequenceClassification,
         'roberta': RobertaForSequenceClassification,
         'albert': AlbertForSequenceClassification,
-        'deberta': DebertaV2ForSequenceClassification
+        'deberta': DebertaForSequenceClassification
     }
 
     tokenizer_map = {
@@ -77,7 +77,7 @@ def run_main(args):
         'xlnet': XLNetTokenizer,
         'roberta': RobertaTokenizer,
         'albert': AlbertTokenizer,
-        'deberta': DebertaV2Tokenizer
+        'deberta': DebertaTokenizer
     }
 
     if args.gradient_accumulation_steps < 1:
