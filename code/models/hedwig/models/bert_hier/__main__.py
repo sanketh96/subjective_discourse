@@ -3,14 +3,14 @@ import json
 
 import numpy as np
 import torch
-from transformers import AdamW, BertTokenizer, RobertaTokenizer, XLNetTokenizer, get_linear_schedule_with_warmup
+from transformers import AdamW, BertTokenizer, RobertaTokenizer, DebertaTokenizer, XLNetTokenizer, get_linear_schedule_with_warmup
 
 from common.constants import *
 from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
 from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
 from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
 from models.bert_hier.args import get_args
-from models.bert_hier.model import BertHierarchical, RobertaHierarchical, XLNetHierarchical
+from models.bert_hier.model import BertHierarchical, RobertaHierarchical, XLNetHierarchical, DebertaHierarchical
 
 
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
@@ -75,13 +75,15 @@ def run_main(args):
     tokenizer_map = {
         'bert': BertTokenizer,
         'roberta': RobertaTokenizer,
-        'xlnet': XLNetTokenizer
+        'xlnet': XLNetTokenizer,
+        'deberta': DebertaTokenizer
     }
 
     model_map = {
         'bert': BertHierarchical,
         'roberta': RobertaHierarchical,
-        'xlnet': XLNetHierarchical
+        'xlnet': XLNetHierarchical,
+        'deberta': DebertaHierarchical
     }
 
     if args.gradient_accumulation_steps < 1:
@@ -112,7 +114,13 @@ def run_main(args):
         os.makedirs(save_path, exist_ok=True)
 
     pretrained_vocab_path = args.model
-    tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
+
+    if args.model_family == 'deberta':
+        tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path, add_prefix_space=True)
+    else:
+        tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
+
+    # tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
 
     train_examples = None
     num_train_optimization_steps = None
