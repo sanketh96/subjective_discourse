@@ -9,6 +9,7 @@ from common.constants import *
 from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
 from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
 from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
+from datasets.bert_processors.congressional_hearing_explanations_processor import CongressionalHearingExplanationsProcessor
 from models.bert_hier.args import get_args
 from models.bert_hier.model import BertHierarchical, RobertaHierarchical, XLNetHierarchical, DebertaHierarchical
 
@@ -70,6 +71,7 @@ def run_main(args):
 
     dataset_map = {
         'CongressionalHearing': CongressionalHearingProcessor,
+        'CongressionalHearingExplanations': CongressionalHearingExplanationsProcessor
     }
 
     tokenizer_map = {
