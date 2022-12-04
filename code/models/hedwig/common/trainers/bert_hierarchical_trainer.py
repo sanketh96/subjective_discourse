@@ -3,7 +3,7 @@ import os
 import time
 
 import torch
-from torch.utils.data import DataLoader, RandomSampler, TensorDataset
+from torch.utils.data import DataLoader, RandomSampler, TensorDataset, SequentialSampler
 from tqdm import tqdm
 from tqdm import trange
 
@@ -120,7 +120,8 @@ class BertHierarchicalTrainer(object):
 
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
 
-        train_sampler = RandomSampler(train_data)
+        # train_sampler = RandomSampler(train_data)
+        train_sampler = SequentialSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
 
         print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))

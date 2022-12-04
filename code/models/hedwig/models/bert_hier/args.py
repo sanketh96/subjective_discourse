@@ -10,6 +10,7 @@ def get_args():
     parser.add_argument('--model-family', type=str, default='bert', choices=['bert', 'xlnet', 'roberta', 'albert', 'deberta'])
     parser.add_argument('--dataset', type=str, default='SST-2', choices=['SST-2', 'AGNews', 'Reuters',
                                                                          'CongressionalHearing', 'CongressionalHearingExplanations',
+                                                                         'CongressionalHearingExplanationsStratified',
                                                                          'CongressionalHearingBinary', 'AAPD', 'IMDB',
                                                                          'Yelp2014'])
     parser.add_argument('--save-path', type=str, default=os.path.join('model_checkpoints', 'bert'))
