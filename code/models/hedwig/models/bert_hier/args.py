@@ -12,6 +12,8 @@ def get_args():
                                                                          'CongressionalHearing', 'CongressionalHearingExplanations',
                                                                          'CongressionalHearingExplanationsStratified',
                                                                          'CongressionalHearingBinary', 'AAPD', 'IMDB',
+                                                                         'CongressionalHearingEasy', 'CongressionalHearingMed', 
+                                                                         'CongressionalHearingHard',
                                                                          'Yelp2014'])
     parser.add_argument('--save-path', type=str, default=os.path.join('model_checkpoints', 'bert'))
     parser.add_argument('--cache-dir', default='cache', type=str)

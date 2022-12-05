@@ -11,6 +11,9 @@ from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
 from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
 from datasets.bert_processors.congressional_hearing_explanations_processor import CongressionalHearingExplanationsProcessor
 from datasets.bert_processors.congressional_hearing_explanations_stratified_processor import CongressionalHearingExplanationsStratifiedProcessor
+from datasets.bert_processors.congressional_hearing_easy_processor import CongressionalHearingEasyProcessor
+from datasets.bert_processors.congressional_hearing_med_processor import CongressionalHearingMedProcessor
+from datasets.bert_processors.congressional_hearing_hard_processor import CongressionalHearingHardProcessor
 from models.bert_hier.args import get_args
 from models.bert_hier.model import BertHierarchical, RobertaHierarchical, XLNetHierarchical, DebertaHierarchical
 
@@ -73,7 +76,10 @@ def run_main(args):
     dataset_map = {
         'CongressionalHearing': CongressionalHearingProcessor,
         'CongressionalHearingExplanations': CongressionalHearingExplanationsProcessor,
-        'CongressionalHearingExplanationsStratified': CongressionalHearingExplanationsStratifiedProcessor
+        'CongressionalHearingExplanationsStratified': CongressionalHearingExplanationsStratifiedProcessor,
+        'CongressionalHearingEasy': CongressionalHearingEasyProcessor,
+        'CongressionalHearingMed': CongressionalHearingMedProcessor,
+        'CongressionalHearingHard': CongressionalHearingHardProcessor
     }
 
     tokenizer_map = {
@@ -113,7 +119,7 @@ def run_main(args):
 
     processor = dataset_map[args.dataset](args)
 
-    if not args.trained_model:
+    if not args.trained_model: ## PRIYA
         save_path = os.path.join(args.save_path, processor.NAME)
         os.makedirs(save_path, exist_ok=True)
 

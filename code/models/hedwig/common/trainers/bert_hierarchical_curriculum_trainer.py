@@ -14,7 +14,7 @@ from datasets.bert_processors.abstract_processor import convert_examples_to_hier
 from utils.preprocessing import pad_input_matrix, get_coarse_labels, get_fine_mask
 
 
-class BertHierarchicalTrainer(object):
+class BertHierarchicalCurriculumTrainer(object):
     def __init__(self, model, optimizer, processor, scheduler, tokenizer, args):
         self.args = args
         self.model = model
@@ -26,7 +26,7 @@ class BertHierarchicalTrainer(object):
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.snapshot_path = os.path.join(self.args.save_path, self.processor.NAME, '%s.pt' % timestamp)
+        self.snapshot_path = os.path.join(self.args.save_path, self.processor.NAME, '%s.pt' % timestamp) ## PRIYA
 
         self.num_train_optimization_steps = int(
             len(self.train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
@@ -120,8 +120,8 @@ class BertHierarchicalTrainer(object):
 
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
 
-        train_sampler = RandomSampler(train_data)
-        # train_sampler = SequentialSampler(train_data)
+        # train_sampler = RandomSampler(train_data)
+        train_sampler = SequentialSampler(train_data) ## PRIYA
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
 
         print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
@@ -174,7 +174,7 @@ class BertHierarchicalTrainer(object):
         end_time = time.monotonic()
         # save model at end of training
         # when evaluating on test
-        if self.args.evaluate_test:
+        if self.args.evaluate_test: ## PRIYA
             torch.save(self.model, self.snapshot_path)
         print('End training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         print('Time elapsed: ', end_time-start_time)
