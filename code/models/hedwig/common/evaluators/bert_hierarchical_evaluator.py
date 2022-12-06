@@ -52,6 +52,13 @@ class BertHierarchicalEvaluator(object):
         target_labels_coarse, target_labels_fine = list(), list()
         target_doc_ids = list()
 
+        sample_logits_coarse = list()
+        sample_logits_fine = list()
+        sample_loss_coarse = list()
+        sample_loss_fine = list()
+
+            
+
         for input_ids, input_mask, segment_ids, label_ids_fine, doc_ids in tqdm(eval_dataloader, desc="Evaluating",
                                                                                 disable=silent):
             input_ids = input_ids.to(self.args.device)
@@ -63,6 +70,8 @@ class BertHierarchicalEvaluator(object):
             with torch.no_grad():
                 logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
 
+            sample_logits_coarse.extend(logits_coarse.cpu().detach().numpy())
+            sample_logits_fine.extend(logits_fine.cpu().detach().numpy())
             preds_coarse = torch.sigmoid(logits_coarse).round().long().cpu().detach().numpy()
             predicted_labels_coarse.extend(preds_coarse)
             # get coarse labels from the fine labels
@@ -92,13 +101,18 @@ class BertHierarchicalEvaluator(object):
             total_loss_fine += loss_fine.item()
             total_loss_coarse += loss_coarse.item()
 
+            sample_loss_coarse.append(loss_coarse.item())
+            sample_loss_fine.append(loss_fine.item())
+
             nb_eval_examples += input_ids.size(0)
             nb_eval_steps += 1
 
         metrics_fine = get_metrics(target_labels_fine, predicted_labels_fine,
-                                   target_doc_ids, total_loss_fine, nb_eval_steps)
+                                   target_doc_ids, total_loss_fine, nb_eval_steps,
+                                   sample_loss_fine, sample_logits_fine)
         metrics_coarse = get_metrics(target_labels_coarse, predicted_labels_coarse,
-                                     target_doc_ids, total_loss_coarse, nb_eval_steps)
+                                     target_doc_ids, total_loss_coarse, nb_eval_steps,
+                                     sample_loss_coarse, sample_logits_coarse)
 
         metric_names = ['precision_macro', 'recall_macro', 'f1_macro',
                         'accuracy',
@@ -106,14 +120,14 @@ class BertHierarchicalEvaluator(object):
                         'hamming_loss',
                         'precision_micro', 'recall_micro', 'f1_micro',
                         'precision_class', 'recall_class', 'f1_class', 'support_class',
-                        'confusion_matrix', 'id_gold_pred']
+                        'confusion_matrix', 'id_gold_pred_loss_logits']
 
         metric_names_fine = [name + '_fine' for name in metric_names]
         metric_names_coarse = [name + '_coarse' for name in metric_names]
         return [metrics_fine, metric_names_fine], [metrics_coarse, metric_names_coarse]
 
 
-def get_metrics(target_labels, predicted_labels, doc_ids, total_loss, n_steps):
+def get_metrics(target_labels, predicted_labels, doc_ids, total_loss, n_steps, sample_losses, sample_logits):
     predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
     target_label_sets = [target_label.tolist() for target_label in target_labels]
 
@@ -142,4 +156,4 @@ def get_metrics(target_labels, predicted_labels, doc_ids, total_loss, n_steps):
             hamming_loss,
             precision_micro, recall_micro, f1_micro,
             precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-            cm.tolist(), list(zip(doc_ids, target_label_sets, predicted_label_sets))]
+            cm.tolist(), list(zip(doc_ids, target_label_sets, predicted_label_sets, sample_losses, sample_logits))]
