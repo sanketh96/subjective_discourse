@@ -19,6 +19,7 @@ def process_json_results(json_prefix, save_file, split, label_suffix=''):
     json_pattern = json_prefix+'_fold*' + split + '*' + label_suffix
     json_files = get_files_with_pattern('.', json_pattern)
     results_dict = process_model_results(json_files, label_suffix)
+    print(results_dict)
     with open(save_file, 'w') as f:
         w = csv.writer(f, delimiter='\t')
         w.writerow(results_dict.keys())
@@ -26,7 +27,7 @@ def process_json_results(json_prefix, save_file, split, label_suffix=''):
 
 
 def process_model_results(json_files, label_suffix):
-    ignore_keys = ['support_class', 'confusion_matrix', 'label_set_info (id/gold/pred)', 'id_gold_pred']
+    ignore_keys = ['support_class', 'confusion_matrix', 'label_set_info (id/gold/pred)', 'id_gold_pred_loss_logits']
     ignore_keys = [key+label_suffix for key in ignore_keys]
 
     # read all json files
