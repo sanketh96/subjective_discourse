@@ -91,7 +91,7 @@ class RobertaHierarchical(nn.Module):
         sequence_output = outputs[0]
         logits_coarse, logits_fine = self.classifier(sequence_output)
 
-        return logits_coarse, logits_fine
+        return logits_coarse, logits_fine, sequence_output
 
 
 class RobertaClassificationHeads(nn.Module):

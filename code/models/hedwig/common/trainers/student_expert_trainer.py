@@ -14,15 +14,18 @@ from datasets.bert_processors.abstract_processor import convert_examples_to_hier
 from utils.preprocessing import pad_input_matrix, get_coarse_labels, get_fine_mask
 
 
-class BertHierarchicalTrainer(object):
-    def __init__(self, model, optimizer, processor, scheduler, tokenizer, args):
+class StudentExpertTrainer(object):
+    def __init__(self, model, expert_model, optimizer, processor, scheduler, tokenizer, args):
         self.args = args
         self.model = model
         self.model_fine = model
+        self.expert_model = expert_model
         self.optimizer = optimizer
         self.processor = processor
         self.scheduler = scheduler
         self.tokenizer = tokenizer
+        self.train_examples_explanation = self.processor.get_train_examples(args.data_dir)
+        args.data_dir.use_text_c = False
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -42,15 +45,20 @@ class BertHierarchicalTrainer(object):
         self.minimum_loss_percent_decrease = 0.4
         self.patience_training = 15
         self.training_converged = True
+        self.lambda_val = 0.6
+        self.expert_model.eval()
 
     def train_epoch(self, train_dataloader):
         self.tr_loss_coarse, self.tr_loss_fine = 0, 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
-            input_ids, input_mask, segment_ids, label_ids = batch
-            logits_coarse, logits_fine, _ = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
+            input_ids, input_mask, segment_ids, label_ids, input_ids_explanations, input_mask_explanations, segment_ids_explanations, label_ids_explanations = batch
+            logits_coarse, logits_fine, output = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
 
+            with torch.no_grad():
+                _, _, expert_output = self.expert_model(input_ids=input_ids_explanations, attention_mask=input_mask_explanations, token_type_ids=segment_ids_explanations)
+            # outputs = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
             # get coarse labels from the fine labels
             label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
                                                  self.args.parent_to_child_index_map, 
@@ -81,7 +89,11 @@ class BertHierarchicalTrainer(object):
                 logits_fine[~mask_fine] = -10000  # instead of -inf so loss is not nan
                 loss_fine = criterion_fine(logits_fine, label_ids.float())
 
-            loss_total = loss_coarse + loss_fine
+                criterion_mse = torch.nn.MSELoss()
+                loss_mse = criterion_mse(output, expert_output)
+
+
+            loss_total = (loss_coarse + loss_fine) + self.lambda_val*loss_mse
             loss_total.backward()
             self.tr_loss_coarse += loss_coarse.item()
             self.tr_loss_fine += loss_fine.item()
@@ -96,20 +108,33 @@ class BertHierarchicalTrainer(object):
         if self.args.is_hierarchical:
             train_features = convert_examples_to_hierarchical_features(
                 self.train_examples, self.args.max_seq_length, self.tokenizer)
+            train_features_explanations = convert_examples_to_hierarchical_features(
+                self.train_examples_explanation, self.args.max_seq_length, self.tokenizer)
         else:
             train_features = convert_examples_to_features(
                 self.train_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
+            train_features_explanations = convert_examples_to_hierarchical_features(
+                self.train_examples_explanation, self.args.max_seq_length, self.tokenizer)
 
         unpadded_input_ids = [f.input_ids for f in train_features]
         unpadded_input_mask = [f.input_mask for f in train_features]
         unpadded_segment_ids = [f.segment_ids for f in train_features]
 
+        unpadded_input_ids_explanations = [f.input_ids for f in train_features_explanations]
+        unpadded_input_mask_explanations = [f.input_mask for f in train_features_explanations]
+        unpadded_segment_ids_explanations = [f.segment_ids for f in train_features_explanations]
+
         if self.args.is_hierarchical:
             pad_input_matrix(unpadded_input_ids, self.args.max_doc_length)
             pad_input_matrix(unpadded_input_mask, self.args.max_doc_length)
             pad_input_matrix(unpadded_segment_ids, self.args.max_doc_length)
+            pad_input_matrix(unpadded_input_ids_explanations, self.args.max_doc_length)
+            pad_input_matrix(unpadded_input_mask_explanations, self.args.max_doc_length)
+            pad_input_matrix(unpadded_segment_ids_explanations, self.args.max_doc_length)
+
 
         print("Number of examples: ", len(self.train_examples))
+        print("Number of examples for explanation features: ", len(self.train_examples_explanation))
         print("Batch size:", self.args.batch_size)
         print("Num of steps:", self.num_train_optimization_steps)
 
@@ -118,7 +143,12 @@ class BertHierarchicalTrainer(object):
         padded_segment_ids = torch.tensor(unpadded_segment_ids, dtype=torch.long)
         label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
 
-        train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
+        padded_input_ids_explanations = torch.tensor(unpadded_input_ids_explanations, dtype=torch.long)
+        padded_input_mask_explanations = torch.tensor(unpadded_input_mask_explanations, dtype=torch.long)
+        padded_segment_ids_explanations = torch.tensor(unpadded_segment_ids_explanations, dtype=torch.long)
+        label_ids_explanations = torch.tensor([f.label_id for f in train_features_explanations], dtype=torch.long)
+
+        train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, padded_input_ids_explanations, padded_input_mask_explanations, padded_segment_ids_explanations, label_ids_explanations)
 
         train_sampler = RandomSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)

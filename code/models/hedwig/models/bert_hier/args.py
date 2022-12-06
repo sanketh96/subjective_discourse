@@ -67,5 +67,7 @@ def get_args():
     parser.add_argument('--use-fourth-input', action='store_true')
     parser.add_argument('--fourth-input-column', type=int, default=12)
     parser.add_argument('--num_train_restarts', type=int, default=3)
+    parser.add_argument('--use_expert_model', action='store_true')
+    parser.add_argument('--expert_model_path', type=str, default=None)
     args = parser.parse_args()
     return args
