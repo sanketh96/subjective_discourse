@@ -113,8 +113,8 @@ class StudentExpertTrainer(object):
         else:
             train_features = convert_examples_to_features(
                 self.train_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
-            train_features_explanations = convert_examples_to_hierarchical_features(
-                self.train_examples_explanation, self.args.max_seq_length, self.tokenizer)
+            train_features_explanations = convert_examples_to_features(
+                self.train_examples_explanation, self.args.max_seq_length, self.tokenizer, use_guid=True)
 
         unpadded_input_ids = [f.input_ids for f in train_features]
         unpadded_input_mask = [f.input_mask for f in train_features]
