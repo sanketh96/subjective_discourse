@@ -25,7 +25,7 @@ class StudentExpertTrainer(object):
         self.scheduler = scheduler
         self.tokenizer = tokenizer
         self.train_examples_explanation = self.processor.get_train_examples(args.data_dir)
-        args.data_dir.use_text_c = False
+        self.processor.use_text_c = False
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
