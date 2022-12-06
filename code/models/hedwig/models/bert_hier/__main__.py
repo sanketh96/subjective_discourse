@@ -54,7 +54,7 @@ def create_optimizer_scheduler(model, args, num_train_optimization_steps):
     return optimizer, scheduler
 
 
-def run_main(args):
+def run_main(args, curr_fold):
     print('Args: ', args)
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     n_gpu = torch.cuda.device_count()
@@ -139,9 +139,28 @@ def run_main(args):
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
+    # model_path = './model_checkpoints/bert/CongressionalHearingEasyFolds/fold0/2022-12-05_02-05-58.pt'
+    # model_json = torch.load(model_path)
+    
+    # print(model_json)
+    # import pdb; pdb.set_trace()
+    # ["model"]
     model = model_map[args.model_family](model_name=args.model,
                                          num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels,
                                          use_second_input=args.use_second_input)
+    # model = torch.load()
+    # model_by_fold = ['./model_checkpoints/bert/CongressionalHearingEasyFolds/fold0/2022-12-06_01-44-08.pt', 
+    # './model_checkpoints/bert/CongressionalHearingEasyFolds/fold1/2022-12-06_02-12-09.pt',
+    # './model_checkpoints/bert/CongressionalHearingEasyFolds/fold2/2022-12-06_02-40-13.pt',
+    # './model_checkpoints/bert/CongressionalHearingEasyFolds/fold3/2022-12-06_03-08-18.pt']
+    
+    model_by_fold = ['./model_checkpoints/bert/CongressionalHearingMedFolds/fold0/2022-12-06_04-56-16.pt',
+    './model_checkpoints/bert/CongressionalHearingMedFolds/fold1/2022-12-06_06-20-53.pt',
+    './model_checkpoints/bert/CongressionalHearingMedFolds/fold2/2022-12-06_07-16-07.pt',
+    './model_checkpoints/bert/CongressionalHearingMedFolds/fold3/2022-12-06_08-11-19.pt']
+    # if curr_fold is not None:
+    print('Fold: ', curr_fold, 'Model: ', model_by_fold[curr_fold])
+    model = torch.load(model_by_fold[curr_fold])
     model.to(device)
 
     # Prepare optimizer
@@ -151,8 +170,17 @@ def run_main(args):
                                       scheduler, tokenizer, args)
 
     trainer.train()
+    
     model = torch.load(trainer.snapshot_path)
-
+    # else:
+    #   model = torch.load(trainer.snapshot_path)
+    # model = torch.load('./model_checkpoints/bert/CongressionalHearingEasyFolds/fold3/2022-12-05_04-46-18.pt')
+    # model = torch.load('./model_checkpoints/bert/CongressionalHearingMedFolds/fold3/2022-12-05_08-22-59.pt')
+    # model = torch.load('./model_checkpoints/bert/CongressionalHearingMedFolds/fold1/2022-12-05_06-32-33.pt')
+    # # model = torch.load('./model_checkpoints/bert/CongressionalHearingEasyFolds/fold0/2022-12-05_02-05-58.pt')
+    # model = torch.load('./model_checkpoints/bert/CongressionalHearingMedFolds/fold0/2022-12-05_02-55-08.pt')
+    
+    
     if trainer.training_converged:
         if args.evaluate_dev:
             evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
