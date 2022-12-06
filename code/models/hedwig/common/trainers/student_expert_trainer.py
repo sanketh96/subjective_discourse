@@ -148,6 +148,7 @@ class StudentExpertTrainer(object):
         padded_segment_ids_explanations = torch.tensor(unpadded_segment_ids_explanations, dtype=torch.long)
         label_ids_explanations = torch.tensor([f.label_id for f in train_features_explanations], dtype=torch.long)
 
+        assert [f.label_id for f in train_features] == [f.label_id for f in train_features_explanations], "Label ids mismatch"
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, padded_input_ids_explanations, padded_input_mask_explanations, padded_segment_ids_explanations, label_ids_explanations)
 
         train_sampler = RandomSampler(train_data)

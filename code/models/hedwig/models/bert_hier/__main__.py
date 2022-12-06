@@ -8,6 +8,7 @@ from transformers import AdamW, BertTokenizer, RobertaTokenizer, DebertaTokenize
 from common.constants import *
 from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
 from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
+from common.trainers.student_expert_trainer import StudentExpertTrainer
 from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
 from datasets.bert_processors.congressional_hearing_explanations_processor import CongressionalHearingExplanationsProcessor
 from models.bert_hier.args import get_args
@@ -139,11 +140,16 @@ def run_main(args):
     # Prepare optimizer
     optimizer, scheduler = create_optimizer_scheduler(model, args, num_train_optimization_steps)
 
-    trainer = BertHierarchicalTrainer(model, optimizer, processor,
-                                      scheduler, tokenizer, args)
-
-    trainer.train()
-    model = torch.load(trainer.snapshot_path)
+    if args.use_expert_model:
+        expert_model = torch.load(args.expert_model_path)
+        expert_trainer = StudentExpertTrainer(model, expert_model, optimizer, processor, scheduler, tokenizer, args)
+        expert_trainer.train()
+        model = torch.load(expert_trainer.snapshot_path)
+    else:
+        trainer = BertHierarchicalTrainer(model, optimizer, processor,
+                                        scheduler, tokenizer, args)
+        trainer.train()
+        model = torch.load(trainer.snapshot_path)
 
     if trainer.training_converged:
         if args.evaluate_dev:
