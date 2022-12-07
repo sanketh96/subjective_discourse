@@ -172,7 +172,7 @@ class BertHierarchicalTrainer(object):
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
 
         num_of_inputs = len(train_features)
-        dataloader_count = len(num_of_inputs)//10
+        dataloader_count = num_of_inputs//10
         subset_size = num_of_inputs//dataloader_count
         train_dataloaders = []
         
