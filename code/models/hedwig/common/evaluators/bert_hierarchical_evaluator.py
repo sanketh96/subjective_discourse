@@ -107,12 +107,13 @@ class BertHierarchicalEvaluator(object):
             nb_eval_examples += input_ids.size(0)
             nb_eval_steps += 1
 
+        print('Loss len ', len(sample_loss_coarse), 'Logits len ', len(sample_logits_fine))
         metrics_fine = get_metrics(target_labels_fine, predicted_labels_fine,
                                    target_doc_ids, total_loss_fine, nb_eval_steps,
-                                   sample_loss_fine, sample_logits_fine)
+                                   sample_logits_fine)
         metrics_coarse = get_metrics(target_labels_coarse, predicted_labels_coarse,
                                      target_doc_ids, total_loss_coarse, nb_eval_steps,
-                                     sample_loss_coarse, sample_logits_coarse)
+                                     sample_logits_coarse)
 
         metric_names = ['precision_macro', 'recall_macro', 'f1_macro',
                         'accuracy',
@@ -127,7 +128,7 @@ class BertHierarchicalEvaluator(object):
         return [metrics_fine, metric_names_fine], [metrics_coarse, metric_names_coarse]
 
 
-def get_metrics(target_labels, predicted_labels, doc_ids, total_loss, n_steps, sample_losses, sample_logits):
+def get_metrics(target_labels, predicted_labels, doc_ids, total_loss, n_steps, sample_logits):
     predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
     target_label_sets = [target_label.tolist() for target_label in target_labels]
 
@@ -156,4 +157,4 @@ def get_metrics(target_labels, predicted_labels, doc_ids, total_loss, n_steps, s
             hamming_loss,
             precision_micro, recall_micro, f1_micro,
             precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-            cm.tolist(), list(zip(doc_ids, target_label_sets, predicted_label_sets, sample_losses, sample_logits))]
+            cm.tolist(), list(zip(doc_ids, target_label_sets, predicted_label_sets, sample_logits))]
