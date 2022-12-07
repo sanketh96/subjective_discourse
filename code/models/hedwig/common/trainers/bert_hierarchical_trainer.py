@@ -3,7 +3,7 @@ import os
 import time
 
 import torch
-from torch.utils.data import DataLoader, RandomSampler, TensorDataset
+from torch.utils.data import DataLoader, RandomSampler, SubsetRandomSampler, TensorDataset
 from tqdm import tqdm
 from tqdm import trange
 
@@ -43,6 +43,57 @@ class BertHierarchicalTrainer(object):
         self.patience_training = 15
         self.training_converged = True
 
+    def train_epoch_by_subsets(self, train_dataloaders):
+        self.tr_loss_coarse, self.tr_loss_fine = 0, 0
+        for train_dataloader in train_dataloaders:
+            for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
+                self.model.train()
+                batch = tuple(t.to(self.args.device) for t in batch)
+                input_ids, input_mask, segment_ids, label_ids = batch
+                logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
+
+                # get coarse labels from the fine labels
+                label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
+                                                    self.args.parent_to_child_index_map, 
+                                                    self.args.device)
+                
+                # calculate mask to ignore invalid
+                # fine labels based on gold coarse labels
+                mask_fine = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
+
+                if self.args.loss == 'cross-entropy':
+                    if self.args.pos_weights_coarse:
+                        pos_weights_coarse = [float(w) for w in self.args.pos_weights_coarse.split(',')]
+                        pos_weight_coarse = torch.FloatTensor(pos_weights_coarse)
+                    else:
+                        pos_weight_coarse = torch.ones([self.args.num_coarse_labels])
+                    if self.args.pos_weights:
+                        pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
+                        pos_weights = torch.FloatTensor(pos_weights)
+                    else:
+                        pos_weights = torch.ones([self.args.num_labels])
+
+                    criterion_coarse = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_coarse)
+                    criterion_coarse = criterion_coarse.to(self.args.device)
+                    loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
+
+                    criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+                    criterion_fine = criterion_fine.to(self.args.device)
+                    logits_fine[~mask_fine] = -10000  # instead of -inf so loss is not nan
+                    loss_fine = criterion_fine(logits_fine, label_ids.float())
+
+                loss_total = loss_coarse + loss_fine
+                loss_total.backward()
+                self.tr_loss_coarse += loss_coarse.item()
+                self.tr_loss_fine += loss_fine.item()
+                self.nb_tr_steps += 1
+                if (step + 1) % self.args.gradient_accumulation_steps == 0:
+                    self.optimizer.step()
+                    self.scheduler.step()
+                    self.optimizer.zero_grad()
+                    self.iterations += 1
+
+    
     def train_epoch(self, train_dataloader):
         self.tr_loss_coarse, self.tr_loss_fine = 0, 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
@@ -120,13 +171,21 @@ class BertHierarchicalTrainer(object):
 
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
 
-        train_sampler = RandomSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
+        num_of_inputs = len(train_features)
+        dataloader_count = len(num_of_inputs)//10
+        subset_size = num_of_inputs//dataloader_count
+        train_dataloaders = []
+        
+        for i in range(0,num_of_inputs, subset_size):
+            indices = list(range(i, i+subset_size))
+            train_sampler = SubsetRandomSampler(indices)
+            train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
+            train_dataloaders.append(train_dataloader)
 
         print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         start_time = time.monotonic()
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
-            self.train_epoch(train_dataloader)
+            self.train_epoch_by_subsets(train_dataloaders)
             print('COARSE Train loss: ', self.tr_loss_coarse)
             print('FINE Train loss: ', self.tr_loss_fine)
             if epoch == 0:

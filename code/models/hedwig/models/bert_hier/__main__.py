@@ -139,6 +139,8 @@ def run_main(args):
                                          use_second_input=args.use_second_input)
     model.to(device)
 
+
+
     # Prepare optimizer
     optimizer, scheduler = create_optimizer_scheduler(model, args, num_train_optimization_steps)
 
@@ -146,6 +148,13 @@ def run_main(args):
                                       scheduler, tokenizer, args)
 
     trainer.train()
+    # model_by_fold = ['./model_checkpoints/bert/CongressionalHearingFolds/fold0/2022-12-07_06-22-24.pt',
+    # './model_checkpoints/bert/CongressionalHearingFolds/fold1/2022-12-07_07-22-39.pt',
+    # './model_checkpoints/bert/CongressionalHearingFolds/fold2/2022-12-07_08-22-58.pt',
+    # './model_checkpoints/bert/CongressionalHearingFolds/fold3/2022-12-07_09-23-18.pt']
+    # trainer.training_converged = True
+    # evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='dev')
+
     model = torch.load(trainer.snapshot_path)
     # trainer.training_converged = True
     if trainer.training_converged:
