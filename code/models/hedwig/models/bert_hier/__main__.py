@@ -31,6 +31,7 @@ def print_save_scores(scores, score_type, save_file, args, split):
         print('\n' + score_type + ': ' + LOG_HEADER_CLASS)
         print(LOG_TEMPLATE_CLASS.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
+    # print(scores)
     scores_dict = dict(zip(scores[1], scores[0]))
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
@@ -144,7 +145,7 @@ def run_main(args):
 
     trainer.train()
     model = torch.load(trainer.snapshot_path)
-
+    # trainer.training_converged = True
     if trainer.training_converged:
         if args.evaluate_dev:
             evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')

@@ -70,8 +70,8 @@ class BertHierarchicalEvaluator(object):
             with torch.no_grad():
                 logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
 
-            sample_logits_coarse.extend(logits_coarse.cpu().detach().numpy())
-            sample_logits_fine.extend(logits_fine.cpu().detach().numpy())
+            sample_logits_coarse.extend(logits_coarse.cpu().detach().numpy().tolist())
+            sample_logits_fine.extend(logits_fine.cpu().detach().numpy().tolist())
             preds_coarse = torch.sigmoid(logits_coarse).round().long().cpu().detach().numpy()
             predicted_labels_coarse.extend(preds_coarse)
             # get coarse labels from the fine labels
@@ -120,7 +120,7 @@ class BertHierarchicalEvaluator(object):
                         'hamming_loss',
                         'precision_micro', 'recall_micro', 'f1_micro',
                         'precision_class', 'recall_class', 'f1_class', 'support_class',
-                        'confusion_matrix', 'id_gold_pred_loss_logits']
+                        'confusion_matrix', 'id_gold_pred']
 
         metric_names_fine = [name + '_fine' for name in metric_names]
         metric_names_coarse = [name + '_coarse' for name in metric_names]
