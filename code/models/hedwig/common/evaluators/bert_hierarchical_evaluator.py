@@ -61,7 +61,7 @@ class BertHierarchicalEvaluator(object):
             target_doc_ids.extend(doc_ids.tolist())
 
             with torch.no_grad():
-                logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
+                logits_coarse, logits_fine, _ = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
 
             preds_coarse = torch.sigmoid(logits_coarse).round().long().cpu().detach().numpy()
             predicted_labels_coarse.extend(preds_coarse)
