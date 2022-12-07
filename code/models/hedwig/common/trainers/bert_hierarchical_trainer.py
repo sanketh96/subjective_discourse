@@ -47,53 +47,53 @@ class BertHierarchicalTrainer(object):
     def train_epoch_by_subsets(self, train_dataloaders):
         self.tr_loss_coarse, self.tr_loss_fine = 0, 0
         for train_dataloader in train_dataloaders:
-            self.train_epoch(train_dataloader)
-            # for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
-            #     self.model.train()
-            #     batch = tuple(t.to(self.args.device) for t in batch)
-            #     input_ids, input_mask, segment_ids, label_ids = batch
-            #     logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
+            # self.train_epoch(train_dataloader)
+            for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
+                self.model.train()
+                batch = tuple(t.to(self.args.device) for t in batch)
+                input_ids, input_mask, segment_ids, label_ids = batch
+                logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
 
-            #     # get coarse labels from the fine labels
-            #     label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
-            #                                         self.args.parent_to_child_index_map, 
-            #                                         self.args.device)
+                # get coarse labels from the fine labels
+                label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
+                                                    self.args.parent_to_child_index_map, 
+                                                    self.args.device)
                 
-            #     # calculate mask to ignore invalid
-            #     # fine labels based on gold coarse labels
-            #     mask_fine = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
+                # calculate mask to ignore invalid
+                # fine labels based on gold coarse labels
+                mask_fine = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
 
-            #     if self.args.loss == 'cross-entropy':
-            #         if self.args.pos_weights_coarse:
-            #             pos_weights_coarse = [float(w) for w in self.args.pos_weights_coarse.split(',')]
-            #             pos_weight_coarse = torch.FloatTensor(pos_weights_coarse)
-            #         else:
-            #             pos_weight_coarse = torch.ones([self.args.num_coarse_labels])
-            #         if self.args.pos_weights:
-            #             pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
-            #             pos_weights = torch.FloatTensor(pos_weights)
-            #         else:
-            #             pos_weights = torch.ones([self.args.num_labels])
+                if self.args.loss == 'cross-entropy':
+                    if self.args.pos_weights_coarse:
+                        pos_weights_coarse = [float(w) for w in self.args.pos_weights_coarse.split(',')]
+                        pos_weight_coarse = torch.FloatTensor(pos_weights_coarse)
+                    else:
+                        pos_weight_coarse = torch.ones([self.args.num_coarse_labels])
+                    if self.args.pos_weights:
+                        pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
+                        pos_weights = torch.FloatTensor(pos_weights)
+                    else:
+                        pos_weights = torch.ones([self.args.num_labels])
 
-            #         criterion_coarse = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_coarse)
-            #         criterion_coarse = criterion_coarse.to(self.args.device)
-            #         loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
+                    criterion_coarse = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_coarse)
+                    criterion_coarse = criterion_coarse.to(self.args.device)
+                    loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
 
-            #         criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
-            #         criterion_fine = criterion_fine.to(self.args.device)
-            #         logits_fine[~mask_fine] = -10000  # instead of -inf so loss is not nan
-            #         loss_fine = criterion_fine(logits_fine, label_ids.float())
+                    criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+                    criterion_fine = criterion_fine.to(self.args.device)
+                    logits_fine[~mask_fine] = -10000  # instead of -inf so loss is not nan
+                    loss_fine = criterion_fine(logits_fine, label_ids.float())
 
-            #     loss_total = loss_coarse + loss_fine
-            #     loss_total.backward()
-            #     self.tr_loss_coarse += loss_coarse.item()
-            #     self.tr_loss_fine += loss_fine.item()
-            #     self.nb_tr_steps += 1
-            #     if (step + 1) % self.args.gradient_accumulation_steps == 0:
-            #         self.optimizer.step()
-            #         self.scheduler.step()
-            #         self.optimizer.zero_grad()
-            #         self.iterations += 1
+                loss_total = loss_coarse + loss_fine
+                loss_total.backward()
+                self.tr_loss_coarse += loss_coarse.item()
+                self.tr_loss_fine += loss_fine.item()
+                self.nb_tr_steps += 1
+                if (step + 1) % self.args.gradient_accumulation_steps == 0:
+                    self.optimizer.step()
+                    self.scheduler.step()
+                    self.optimizer.zero_grad()
+                    self.iterations += 1
 
     
     def train_epoch(self, train_dataloader):
