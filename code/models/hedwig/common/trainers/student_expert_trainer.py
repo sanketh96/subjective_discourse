@@ -24,7 +24,7 @@ class StudentExpertTrainer(object):
         self.processor = processor
         self.scheduler = scheduler
         self.tokenizer = tokenizer
-        self.train_examples_explanation = self.processor.get_train_examples(args.data_dir)
+        self.train_examples_explanation = self.processor.get_train_examples(args.data_dir, is_expert=True)
         self.processor.use_text_c = False
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
@@ -206,5 +206,6 @@ class StudentExpertTrainer(object):
         # when evaluating on test
         if self.args.evaluate_test:
             torch.save(self.model, self.snapshot_path)
+            print('Saved at: ', self.snapshot_path)
         print('End training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         print('Time elapsed: ', end_time-start_time)

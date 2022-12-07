@@ -151,12 +151,14 @@ def run_main(args):
         trainer.train()
         model = torch.load(trainer.snapshot_path)
 
-    if trainer.training_converged:
+    if (args.use_expert_model and expert_trainer.training_converged) or trainer.training_converged:
         if args.evaluate_dev:
             evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
         if args.evaluate_test:
             evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
 
+    if args.use_expert_model:
+        return expert_trainer.training_converged
     return trainer.training_converged
 
 

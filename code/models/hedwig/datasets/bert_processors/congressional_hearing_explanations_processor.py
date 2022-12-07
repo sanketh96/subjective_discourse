@@ -7,8 +7,9 @@ class CongressionalHearingExplanationsProcessor(BertProcessor):
     NUM_CLASSES = 6
     IS_MULTILABEL = True
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, is_expert=False):
         super().__init__()
+        self.config = config
         self.column_id = config.id_column
         self.column_label = config.label_column
         self.column_text_a = config.first_input_column
@@ -23,7 +24,11 @@ class CongressionalHearingExplanationsProcessor(BertProcessor):
         else:
             self.NAME = 'CongressionalHearingExplanations'
 
-    def get_train_examples(self, data_dir):
+    def get_train_examples(self, data_dir, is_expert=False):
+        if is_expert:
+            self.column_text_a = self.config.third_input_column
+            self.use_text_b = False
+            self.use_text_c = False
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'train.tsv')))
 
