@@ -68,5 +68,6 @@ def get_args():
     parser.add_argument('--use-fourth-input', action='store_true')
     parser.add_argument('--fourth-input-column', type=int, default=12)
     parser.add_argument('--num_train_restarts', type=int, default=3)
+    parser.add_argument('--subset_count', type=int, default=10)
     args = parser.parse_args()
     return args

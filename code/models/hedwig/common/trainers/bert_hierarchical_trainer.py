@@ -23,6 +23,7 @@ class BertHierarchicalTrainer(object):
         self.processor = processor
         self.scheduler = scheduler
         self.tokenizer = tokenizer
+        self.subset_count = args.subset_count
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -173,8 +174,8 @@ class BertHierarchicalTrainer(object):
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
 
         num_of_inputs = len(train_features)
-        dataloader_count = num_of_inputs//10
-        subset_size = num_of_inputs//dataloader_count
+        
+        subset_size = num_of_inputs//self.subset_count
         train_dataloaders = []
         
         for i in range(0,num_of_inputs, subset_size):
