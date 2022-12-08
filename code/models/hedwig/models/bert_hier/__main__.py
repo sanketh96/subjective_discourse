@@ -7,7 +7,7 @@ from transformers import AdamW, BertTokenizer, RobertaTokenizer, DebertaTokenize
 
 from common.constants import *
 from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
-from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
+from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer, BertHierarchicalCurriculumTrainer
 from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
 from datasets.bert_processors.congressional_hearing_explanations_processor import CongressionalHearingExplanationsProcessor
 from datasets.bert_processors.congressional_hearing_explanations_stratified_processor import CongressionalHearingExplanationsStratifiedProcessor
@@ -166,7 +166,11 @@ def run_main(args, curr_fold):
     # Prepare optimizer
     optimizer, scheduler = create_optimizer_scheduler(model, args, num_train_optimization_steps)
 
-    trainer = BertHierarchicalTrainer(model, optimizer, processor,
+    if args.use_curriculum:
+        trainer = BertHierarchicalCurriculumTrainer(model, optimizer, processor,
+                                      scheduler, tokenizer, args)
+    else:
+        trainer = BertHierarchicalTrainer(model, optimizer, processor,
                                       scheduler, tokenizer, args)
 
     trainer.train()
