@@ -128,6 +128,7 @@ def run_main(args, fold=None):
     train_examples = None
     num_train_optimization_steps = None
     if not args.trained_model:
+        print('Loading train examples to measure optimization steps..')
         train_examples = processor.get_train_examples(args.data_dir)
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs

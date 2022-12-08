@@ -24,7 +24,9 @@ class StudentExpertTrainer(object):
         self.processor = processor
         self.scheduler = scheduler
         self.tokenizer = tokenizer
+        print('Creating input examples for trained expert..')
         self.train_examples_explanation = self.processor.get_train_examples(args.data_dir, is_expert=True)
+        print('Creating train examples for student..')
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
