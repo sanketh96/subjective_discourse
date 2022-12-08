@@ -155,13 +155,13 @@ def run_main(args, curr_fold):
     # './model_checkpoints/bert/CongressionalHearingEasyFolds/fold2/2022-12-06_02-40-13.pt',
     # './model_checkpoints/bert/CongressionalHearingEasyFolds/fold3/2022-12-06_03-08-18.pt']
     
-    model_by_fold = ['./model_checkpoints/bert/CongressionalHearingMedFolds/fold0/2022-12-06_04-56-16.pt',
-    './model_checkpoints/bert/CongressionalHearingMedFolds/fold1/2022-12-06_06-20-53.pt',
-    './model_checkpoints/bert/CongressionalHearingMedFolds/fold2/2022-12-06_07-16-07.pt',
-    './model_checkpoints/bert/CongressionalHearingMedFolds/fold3/2022-12-06_08-11-19.pt']
-    # if curr_fold is not None:
-    print('Fold: ', curr_fold, 'Model: ', model_by_fold[curr_fold])
-    model = torch.load(model_by_fold[curr_fold])
+    # model_by_fold = ['./model_checkpoints/bert/CongressionalHearingMedFolds/fold0/2022-12-06_04-56-16.pt',
+    # './model_checkpoints/bert/CongressionalHearingMedFolds/fold1/2022-12-06_06-20-53.pt',
+    # './model_checkpoints/bert/CongressionalHearingMedFolds/fold2/2022-12-06_07-16-07.pt',
+    # './model_checkpoints/bert/CongressionalHearingMedFolds/fold3/2022-12-06_08-11-19.pt']
+    # # if curr_fold is not None:
+    # print('Fold: ', curr_fold, 'Model: ', model_by_fold[curr_fold])
+    # model = torch.load(model_by_fold[curr_fold])
     model.to(device)
 
     # Prepare optimizer
