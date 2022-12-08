@@ -25,34 +25,71 @@ class CongressionalHearingExplanationsProcessor(BertProcessor):
             self.NAME = 'CongressionalHearingExplanations'
 
     def get_train_examples(self, data_dir, is_expert=False):
+        print('Getting train examples...')
         if is_expert:
+            backup_column_text_a = self.column_text_a
+            backup_use_text_b = self.use_text_b
+            backup_use_text_c = self.use_text_c
             self.column_text_a = self.config.third_input_column
             self.use_text_b = False
             self.use_text_c = False
         else:
+            backup_use_text_c = self.use_text_c
             self.use_text_c = False
-        return self._create_examples(
+        examples = self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'train.tsv')))
+        if is_expert:
+            self.column_text_a = backup_column_text_a
+            self.use_text_b = backup_use_text_b
+            self.use_text_c = backup_use_text_c
+        else:
+            self.use_text_c = backup_use_text_c
+        return examples
 
     def get_dev_examples(self, data_dir, is_expert=False):
+        print('Getting dev examples...')
         if is_expert:
+            backup_column_text_a = self.column_text_a
+            backup_use_text_b = self.use_text_b
+            backup_use_text_c = self.use_text_c
             self.column_text_a = self.config.third_input_column
             self.use_text_b = False
             self.use_text_c = False
         else:
+            backup_use_text_c = self.use_text_c
             self.use_text_c = False
-        return self._create_examples(
+        examples = self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'dev.tsv')))
+        if is_expert:
+            self.column_text_a = backup_column_text_a
+            self.use_text_b = backup_use_text_b
+            self.use_text_c = backup_use_text_c
+        else:
+            self.use_text_c = backup_use_text_c
+        return examples
+
 
     def get_test_examples(self, data_dir, is_expert=False):
+        print('Getting test examples...')
         if is_expert:
+            backup_column_text_a = self.column_text_a
+            backup_use_text_b = self.use_text_b
+            backup_use_text_c = self.use_text_c
             self.column_text_a = self.config.third_input_column
             self.use_text_b = False
             self.use_text_c = False
         else:
+            backup_use_text_c = self.use_text_c
             self.use_text_c = False
-        return self._create_examples(
+        examples = self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'test.tsv')))
+        if is_expert:
+            self.column_text_a = backup_column_text_a
+            self.use_text_b = backup_use_text_b
+            self.use_text_c = backup_use_text_c
+        else:
+            self.use_text_c = backup_use_text_c
+        return examples 
 
     def _create_examples(self, lines):
         examples = []

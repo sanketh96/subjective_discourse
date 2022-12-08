@@ -27,7 +27,7 @@ class StudentExpertTrainer(object):
         print('Creating input examples for trained expert..')
         self.train_examples_explanation = self.processor.get_train_examples(args.data_dir, is_expert=True)
         print('Creating train examples for student..')
-        self.train_examples = self.processor.get_train_examples(args.data_dir)
+        self.train_examples = self.processor.get_train_examples(args.data_dir, is_expert=False)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.snapshot_path = os.path.join(self.args.save_path, self.processor.NAME, '%s.pt' % timestamp)
@@ -56,7 +56,8 @@ class StudentExpertTrainer(object):
             batch = tuple(t.to(self.args.device) for t in batch)
             input_ids, input_mask, segment_ids, label_ids, input_ids_explanations, input_mask_explanations, segment_ids_explanations, label_ids_explanations = batch
             logits_coarse, logits_fine, output = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
-
+            # print(f'Student input id {input_ids[0]}, Explanations input id {input_ids_explanations}')
+            # print(f'Student segment id len {len(segment_ids)}, Explanations segment id len {len(segment_ids_explanations)}')
             with torch.no_grad():
                 _, _, expert_output = self.expert_model(input_ids=input_ids_explanations, attention_mask=input_mask_explanations, token_type_ids=segment_ids_explanations)
             # outputs = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)
