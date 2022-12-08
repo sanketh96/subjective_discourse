@@ -51,7 +51,7 @@ def create_optimizer_scheduler(model, args, num_train_optimization_steps):
     return optimizer, scheduler
 
 
-def run_main(args):
+def run_main(args, fold=None):
     print('Args: ', args)
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     n_gpu = torch.cuda.device_count()
@@ -140,8 +140,10 @@ def run_main(args):
     # Prepare optimizer
     optimizer, scheduler = create_optimizer_scheduler(model, args, num_train_optimization_steps)
 
+
     if args.use_expert_model:
-        expert_model = torch.load(args.expert_model_path)
+        fold_expert_model_map = [args.expert_model_path_fold_0, args.expert_model_path_fold_1, args.expert_model_path_fold_2, args.expert_model_path_fold_3]
+        expert_model = torch.load(fold_expert_model_map[fold])
         expert_trainer = StudentExpertTrainer(model, expert_model, optimizer, processor, scheduler, tokenizer, args)
         expert_trainer.train()
         model = torch.load(expert_trainer.snapshot_path)

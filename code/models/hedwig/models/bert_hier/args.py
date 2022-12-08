@@ -69,5 +69,9 @@ def get_args():
     parser.add_argument('--num_train_restarts', type=int, default=3)
     parser.add_argument('--use_expert_model', action='store_true')
     parser.add_argument('--expert_model_path', type=str, default=None)
+    parser.add_argument('--expert_model_path_fold_0', type=str, default=None)
+    parser.add_argument('--expert_model_path_fold_1', type=str, default=None)
+    parser.add_argument('--expert_model_path_fold_2', type=str, default=None)
+    parser.add_argument('--expert_model_path_fold_3', type=str, default=None)
     args = parser.parse_args()
     return args
