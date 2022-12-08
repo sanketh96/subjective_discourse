@@ -51,6 +51,7 @@ class StudentExpertTrainer(object):
 
     def train_epoch(self, train_dataloader):
         self.tr_loss_coarse, self.tr_loss_fine = 0, 0
+        self.tr_loss_mse = 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
