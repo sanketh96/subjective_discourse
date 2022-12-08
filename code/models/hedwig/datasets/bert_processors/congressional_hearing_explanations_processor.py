@@ -29,14 +29,28 @@ class CongressionalHearingExplanationsProcessor(BertProcessor):
             self.column_text_a = self.config.third_input_column
             self.use_text_b = False
             self.use_text_c = False
+        else:
+            self.use_text_c = False
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'train.tsv')))
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, data_dir, is_expert=False):
+        if is_expert:
+            self.column_text_a = self.config.third_input_column
+            self.use_text_b = False
+            self.use_text_c = False
+        else:
+            self.use_text_c = False
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'dev.tsv')))
 
-    def get_test_examples(self, data_dir):
+    def get_test_examples(self, data_dir, is_expert=False):
+        if is_expert:
+            self.column_text_a = self.config.third_input_column
+            self.use_text_b = False
+            self.use_text_c = False
+        else:
+            self.use_text_c = False
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'test.tsv')))
 

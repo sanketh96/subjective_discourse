@@ -25,7 +25,6 @@ class StudentExpertTrainer(object):
         self.scheduler = scheduler
         self.tokenizer = tokenizer
         self.train_examples_explanation = self.processor.get_train_examples(args.data_dir, is_expert=True)
-        self.processor.use_text_c = False
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -37,7 +36,7 @@ class StudentExpertTrainer(object):
         self.log_header = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
         self.log_template = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
-        self.iterations, self.nb_tr_steps, self.tr_loss_coarse, self.tr_loss_fine = 0, 0, 0, 0
+        self.iterations, self.nb_tr_steps, self.tr_loss_coarse, self.tr_loss_fine, self.tr_loss_mse = 0, 0, 0, 0, 0
         self.best_dev_f1, self.unimproved_iters = 0, 0
         self.early_stop = False
 
@@ -97,6 +96,7 @@ class StudentExpertTrainer(object):
             loss_total.backward()
             self.tr_loss_coarse += loss_coarse.item()
             self.tr_loss_fine += loss_fine.item()
+            self.tr_loss_mse += loss_mse.item()
             self.nb_tr_steps += 1
             if (step + 1) % self.args.gradient_accumulation_steps == 0:
                 self.optimizer.step()
@@ -160,6 +160,7 @@ class StudentExpertTrainer(object):
             self.train_epoch(train_dataloader)
             print('COARSE Train loss: ', self.tr_loss_coarse)
             print('FINE Train loss: ', self.tr_loss_fine)
+            print('MSE Train loss: ', self.tr_loss_mse)
             if epoch == 0:
                 self.initial_tr_loss_fine = self.tr_loss_fine
             if self.args.evaluate_dev:

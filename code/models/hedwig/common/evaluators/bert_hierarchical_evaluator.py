@@ -22,9 +22,9 @@ class BertHierarchicalEvaluator(object):
         self.tokenizer = tokenizer
 
         if split == 'test':
-            self.eval_examples = self.processor.get_test_examples(args.data_dir)
+            self.eval_examples = self.processor.get_test_examples(args.data_dir, is_expert=False)
         else:
-            self.eval_examples = self.processor.get_dev_examples(args.data_dir)
+            self.eval_examples = self.processor.get_dev_examples(args.data_dir, is_expert=False)
 
     def get_scores(self, silent=False):
         eval_features = convert_examples_to_features(self.eval_examples, self.args.max_seq_length,
