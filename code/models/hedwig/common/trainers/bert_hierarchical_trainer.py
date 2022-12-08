@@ -179,58 +179,63 @@ class BertHierarchicalTrainer(object):
         train_dataloaders = []
         
         for i in range(0,num_of_inputs, subset_size):
-            indices = list(range(i, i+subset_size))
+            indices = list(range(0, i+subset_size))
             train_sampler = SubsetRandomSampler(indices)
             train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
             train_dataloaders.append(train_dataloader)
 
         print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         start_time = time.monotonic()
-        for epoch in trange(int(self.args.epochs), desc="Epoch"):
-            self.train_epoch_by_subsets(train_dataloaders)
-            print('COARSE Train loss: ', self.tr_loss_coarse)
-            print('FINE Train loss: ', self.tr_loss_fine)
-            if epoch == 0:
-                self.initial_tr_loss_fine = self.tr_loss_fine
-            if self.args.evaluate_dev:
-                dev_evaluator = BertHierarchicalEvaluator(self.model, self.processor,
-                                                          self.tokenizer, self.args, split='dev')
-                scores_fine, scores_coarse = dev_evaluator.get_scores(silent=True)
-                dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine = scores_fine[0][:5]
-                dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse = scores_coarse[0][:5]
+        subset_count = 0
+        for train_dataloader in train_dataloaders:
+            print('Training with data subset ', subset_count)
+            subset_count +=1
+            for epoch in trange(int(self.args.epochs), desc="Epoch"):
+                # self.train_epoch_by_subsets(train_dataloaders)
+                self.train_epoch(train_dataloader)
+                print('COARSE Train loss: ', self.tr_loss_coarse)
+                print('FINE Train loss: ', self.tr_loss_fine)
+                if epoch == 0:
+                    self.initial_tr_loss_fine = self.tr_loss_fine
+                if self.args.evaluate_dev:
+                    dev_evaluator = BertHierarchicalEvaluator(self.model, self.processor,
+                                                            self.tokenizer, self.args, split='dev')
+                    scores_fine, scores_coarse = dev_evaluator.get_scores(silent=True)
+                    dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine = scores_fine[0][:5]
+                    dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse = scores_coarse[0][:5]
 
-                # Print validation results
-                tqdm.write('COARSE: '+self.log_header)
-                tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
-                                                    dev_acc_coarse, dev_precision_coarse, dev_recall_coarse,
-                                                    dev_f1_coarse, dev_loss_coarse))
-                tqdm.write('FINE: ' + self.log_header)
-                tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
-                                                    dev_acc_fine, dev_precision_fine, dev_recall_fine,
-                                                    dev_f1_fine, dev_loss_fine))
+                    # Print validation results
+                    tqdm.write('COARSE: '+self.log_header)
+                    tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                                        dev_acc_coarse, dev_precision_coarse, dev_recall_coarse,
+                                                        dev_f1_coarse, dev_loss_coarse))
+                    tqdm.write('FINE: ' + self.log_header)
+                    tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                                        dev_acc_fine, dev_precision_fine, dev_recall_fine,
+                                                        dev_f1_fine, dev_loss_fine))
 
-                # Update validation results
-                if dev_f1_fine > self.best_dev_f1:
-                    self.unimproved_iters = 0
-                    self.best_dev_f1 = dev_f1_fine
-                    torch.save(self.model, self.snapshot_path)
+                    # Update validation results
+                    if dev_f1_fine > self.best_dev_f1:
+                        self.unimproved_iters = 0
+                        self.best_dev_f1 = dev_f1_fine
+                        torch.save(self.model, self.snapshot_path)
 
-                else:
-                    self.unimproved_iters += 1
-                    if self.unimproved_iters >= self.args.patience:
-                        self.early_stop = True
-                        tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, self.args.eval_metric, self.best_dev_f1))
-                        break
-            if self.args.evaluate_test:
-                # when evaluating on test, we can't use dev
-                # so check train loss is converging
-                if epoch == self.patience_training:
-                    loss_percent = (self.initial_tr_loss_fine-self.tr_loss_fine)/self.initial_tr_loss_fine
-                    if loss_percent <= self.minimum_loss_percent_decrease:
-                        self.training_converged = False
-                        tqdm.write("Training failed to converge. Epoch: {}, Loss percent: {}"
-                                   .format(epoch, loss_percent))
-                        break
+                    else:
+                        self.unimproved_iters += 1
+                        if self.unimproved_iters >= self.args.patience:
+                            self.early_stop = True
+                            tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, self.args.eval_metric, self.best_dev_f1))
+                            break
+                if self.args.evaluate_test:
+                    # when evaluating on test, we can't use dev
+                    # so check train loss is converging
+                    if epoch == self.patience_training:
+                        loss_percent = (self.initial_tr_loss_fine-self.tr_loss_fine)/self.initial_tr_loss_fine
+                        if loss_percent <= self.minimum_loss_percent_decrease:
+                            self.training_converged = False
+                            tqdm.write("Training failed to converge. Epoch: {}, Loss percent: {}"
+                                    .format(epoch, loss_percent))
+                            break
         end_time = time.monotonic()
         # save model at end of training
         # when evaluating on test
