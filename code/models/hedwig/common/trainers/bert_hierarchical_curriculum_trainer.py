@@ -125,7 +125,7 @@ class BertHierarchicalCurriculumTrainer(object):
         train_dataloaders = []
         start_idx = 0
         for i in range(len(train_indices)):
-            indices = list(range(start_idx, train_indices[i]+1))
+            indices = list(range(start_idx, train_indices[i]))
             train_sampler = SubsetRandomSampler(indices=indices)
             train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
             train_dataloaders.append(train_dataloader)
