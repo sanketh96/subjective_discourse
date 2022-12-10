@@ -48,7 +48,7 @@ class BertHierarchical(nn.Module):
 
 class RobertaHierarchical(nn.Module):
 
-    def __init__(self, model_name, num_fine_labels, num_coarse_labels, use_second_input=False):
+    def __init__(self, model_name, num_fine_labels, num_coarse_labels, use_second_input=False, finetune_last_layers_only=False, num_last_layers=None):
         super().__init__()
 
         self.roberta = RobertaModel.from_pretrained(model_name, num_labels=num_fine_labels)
@@ -63,6 +63,25 @@ class RobertaHierarchical(nn.Module):
             single_emb = self.roberta.embeddings.token_type_embeddings
             self.roberta.embeddings.token_type_embeddings = torch.nn.Embedding(2, single_emb.embedding_dim)
             self.roberta.embeddings.token_type_embeddings.weight = torch.nn.Parameter(single_emb.weight.repeat([2, 1]))
+
+        
+        if finetune_last_layers_only:
+            assert num_last_layers is not None
+            print('Freezing RoBERTa...', flush=True)
+            for param in self.roberta.parameters():
+                param.requires_grad = False
+            print('Done.')
+            if num_last_layers > 0:
+                print('Unfreezing last {} layers...'.format(num_last_layers), flush=True)
+                train_params_prefix = ['pooler']
+                for i in range(num_last_layers - 1):
+                    train_params_prefix.append('encoder.layer.{}'.format(11 - i))
+                print('Prefixes: {}'.format(train_params_prefix), flush=True)
+                for name, param in self.roberta.named_parameters():
+                    for prefix in train_params_prefix:
+                        if name.startswith(prefix):
+                            param.requires_grad = True
+                print('Done.')
 
     def forward(
             self,

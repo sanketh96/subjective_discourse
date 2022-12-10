@@ -133,7 +133,13 @@ def run_main(args, fold=None):
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-    model = model_map[args.model_family](model_name=args.model,
+    if args.model_family == 'roberta':
+        model = model_map[args.model_family](model_name=args.model,
+                                         num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels,
+                                         use_second_input=args.use_second_input, 
+                                         finetune_last_layers_only=args.finetune_last_layers_only, num_last_layers=args.num_last_layers)
+    else:
+        model = model_map[args.model_family](model_name=args.model,
                                          num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels,
                                          use_second_input=args.use_second_input)
     model.to(device)
