@@ -46,7 +46,7 @@ class StudentExpertTrainer(object):
         self.minimum_loss_percent_decrease = 0.4
         self.patience_training = 15
         self.training_converged = True
-        self.lambda_val = 0.6
+        self.lambda_val = args.expert_lambda
         self.expert_model.eval()
 
     def train_epoch(self, train_dataloader):
