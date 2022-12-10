@@ -9,6 +9,31 @@ Ferracane, Elisa TBD
 
 Our changes to the codebase for curriculum learning(stage wise) can be viewed from `curriculum-learning-stage` branch and for the student-expert model, the branch name is `student-teacher-changes`
 
+### Commands for training using Curriculum learning
+#### Easy
+```
+python -u -m models.bert_hier.main_cv --dataset CongressionalHearingEasy --model-family roberta --model roberta-base --max-seq-length 512 --evaluate-test --patience 30 --lr 3e-5 --warmup-proportion 0.1 --weight-decay 0.1 --batch-size 8 --epochs 30 --seed 1234 --metrics-json metrics_roberta_easy_hierarchical_gold_sentiments_coarse_num_r_text_test_5_dec.json --first-input-column 16 --use-second-input --second-input-column 2 > ch_roberta_easy_hierarchical_gold_sentiments_coarse_num_r_text_test_5_dec.log
+```
+#### Medium
+```
+python -u -m models.bert_hier.main_cv --dataset CongressionalHearingMed --model-family roberta --model roberta-base --max-seq-length 512 --evaluate-test --patience 30 --lr 3e-5 --warmup-proportion 0.1 --weight-decay 0.1 --batch-size 8 --epochs 30 --seed 1234 --metrics-json metrics_roberta_med_hierarchical_gold_sentiments_coarse_num_r_text_test_5_dec.json --first-input-column 16 --use-second-input --second-input-column 2 > ch_roberta_med_hierarchical_gold_sentiments_coarse_num_r_text_test_5_dec.log
+```
+
+#### Hard
+```
+python -u -m models.bert_hier.main_cv --dataset CongressionalHearingHard --model-family roberta --model roberta-base --max-seq-length 512 --evaluate-test --patience 30 --lr 3e-5 --warmup-proportion 0.1 --weight-decay 0.1 --batch-size 8 --epochs 30 --seed 1234 --metrics-json metrics_roberta_hard_hierarchical_gold_sentiments_coarse_num_r_text_test_5_dec.json --first-input-column 16 --use-second-input --second-input-column 2 > ch_roberta_hard_hierarchical_gold_sentiments_coarse_num_r_text_test_5_dec.log
+```
+
+### Commands for training using Student-Expert model
+#### Training expert model using only explanations
+```
+python -u -m models.bert_hier.main_cv --dataset CongressionalHearingExplanations --model-family roberta --model roberta-base --max-seq-length 512 --evaluate-test --patience 30 --lr 3e-5 --warmup-proportion 0.1 --weight-decay 0.1 --batch-size 8 --epochs 30 --seed 1234 --metrics-json roberta-explanations/metrics_roberta_hierarchical_explanations_concat_final.json --first-input-column 38 --save-path 'model_checkpoints/roberta-explanations-only' > roberta-explanations/ch_roberta_hierarchical_explanations_concat_final.log
+```
+#### Training student-expert model
+```
+python -u -m models.bert_hier.main_cv --dataset CongressionalHearingExplanations --model-family roberta --model roberta-base --max-seq-length 512 --evaluate-test --patience 30 --lr 3e-5 --warmup-proportion 0.1 --weight-decay 0.1 --batch-size 8 --epochs 30 --seed 1234 --metrics-json roberta-student-expert/metrics_roberta_hierarchical_student_expert_concat_test.json --first-input-column 16 --use-second-input --second-input-column 2 --use-third-input --third-input-column 38 --use_expert_model --expert_model_path_fold_0 ./model_checkpoints/roberta-explanations-only/CongressionalHearingFoldsExplanations/fold0/2022-12-08_18-03-55.pt --expert_model_path_fold_1 ./model_checkpoints/roberta-explanations-only/CongressionalHearingFoldsExplanations/fold1/2022-12-08_18-42-25.pt --expert_model_path_fold_2 ./model_checkpoints/roberta-explanations-only/CongressionalHearingFoldsExplanations/fold2/2022-12-08_19-20-58.pt --expert_model_path_fold_3 ./model_checkpoints/roberta-explanations-only/CongressionalHearingFoldsExplanations/fold3/2022-12-08_19-59-28.pt --expert_lambda 0.6 --save-path 'model_checkpoints/student_expert' > roberta-student-expert-colab-lambda/ch_roberta_hierarchical_student_expert_concat_test.log
+```
+
 ## Dataset
 If you're here just for the data, you can download it here: [gold_cv_dev_data.tar.gz](data/gold/gold_cv_dev_data.tar.gz). Unpack with `tar -zxvf gold_cv_dev_data.tar.gz`.
 
