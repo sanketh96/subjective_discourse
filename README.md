@@ -4,7 +4,10 @@ This repo contains the code and data for analyzing subjective judgments of witne
 `
 Ferracane, Elisa TBD
 `
-Our changes to the codebase for curriculum learning can be viewed from curriculum-learning-stages branch and for the student-expert model, the branch name is student-expert-changes
+
+## Advanced Natural Language Processing HW4
+
+Our changes to the codebase for curriculum learning(stage wise) can be viewed from `curriculum-learning-stage` branch and for the student-expert model, the branch name is `student-teacher-changes`
 
 ## Dataset
 If you're here just for the data, you can download it here: [gold_cv_dev_data.tar.gz](data/gold/gold_cv_dev_data.tar.gz). Unpack with `tar -zxvf gold_cv_dev_data.tar.gz`.
